@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Entorno virtual
+venv/
+.venv/
+env/
+.env/
+
+# Variables de entorno
+.env
+*.env
+
+# Persistencia del juego (se regenera sola)
+mejor_cromosoma.json
+
+# IDEs
+.idea/
+.vscode/
+*.suo
+*.user
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+uvicorn.log
