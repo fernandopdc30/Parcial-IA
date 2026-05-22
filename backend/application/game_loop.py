@@ -36,24 +36,27 @@ async def bucle_juego(
     while not stop_event.is_set():
         tiempo_inicio = time.monotonic()
 
-        # ── Ejecutar un tick de simulación física ──────────────────────
-        (
-            controlador.obstaculos,
-            controlador.velocidad_juego,
-            controlador.frames_hasta_obstaculo,
-        ) = tick_simulacion(
-            avatares=controlador.poblacion,
-            obstaculos=controlador.obstaculos,
-            velocidad_juego=controlador.velocidad_juego,
-            frames_hasta_obstaculo=controlador.frames_hasta_obstaculo,
-        )
+        # ── Ejecutar factor_velocidad ticks por frame visual ───────────
+        # Permite acelerar la simulación (2x, 5x, 10x) sin afectar el FPS visual
+        for _ in range(controlador.factor_velocidad):
+            (
+                controlador.obstaculos,
+                controlador.velocidad_juego,
+                controlador.frames_hasta_obstaculo,
+            ) = tick_simulacion(
+                avatares=controlador.poblacion,
+                obstaculos=controlador.obstaculos,
+                velocidad_juego=controlador.velocidad_juego,
+                frames_hasta_obstaculo=controlador.frames_hasta_obstaculo,
+            )
 
-        # ── Actualizar contadores de obstáculos superados ──────────────
-        controlador.actualizar_obstaculos_superados()
+            # Actualizar contadores de obstáculos superados tras cada tick
+            controlador.actualizar_obstaculos_superados()
 
-        # ── Detectar fin de generación y evolucionar ───────────────────
-        if controlador.todos_muertos():
-            controlador.evolucionar_generacion()
+            # Si todos murieron, evolucionar y salir del bucle interno
+            if controlador.todos_muertos():
+                controlador.evolucionar_generacion()
+                break
 
         # ── Construir y enviar el estado al cliente ────────────────────
         estado = _construir_estado(controlador)
@@ -102,12 +105,25 @@ def _construir_estado(controlador: GAController) -> dict:
         mejor_av = max(avatares_vivos, key=lambda a: a.fitness)
         mejor_id = mejor_av.id
 
-    # Serializar todos los avatares (el frontend filtra los muertos)
+    # Serializar avatares — umbral_distancia se envía para el sensor visual en canvas
     avatares_json = [
         {
             "id": av.id,
             "x": round(av.x, 1),
             "y": round(av.y, 1),
+            "vivo": av.vivo,
+            "mejor": av.id == mejor_id,
+            "umbral_distancia": round(av.cromosoma.umbral_distancia, 1),
+        }
+        for av in controlador.poblacion
+    ]
+
+    # Cromosomas para el scatter plot de diversidad genética del HUD
+    cromosomas_json = [
+        {
+            "id": av.id,
+            "dist": round(av.cromosoma.umbral_distancia, 1),
+            "vel": round(av.cromosoma.umbral_velocidad, 2),
             "vivo": av.vivo,
             "mejor": av.id == mejor_id,
         }
@@ -129,5 +145,6 @@ def _construir_estado(controlador: GAController) -> dict:
         "tipo": "estado",
         "avatares": avatares_json,
         "obstaculos": obstaculos_json,
+        "cromosomas": cromosomas_json,
         "stats": controlador.obtener_stats(),
     }

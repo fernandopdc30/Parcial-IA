@@ -1,85 +1,135 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dino Runner GA</title>
-  <link rel="stylesheet" href="/static/style.css" />
-</head>
-<body>
-  <div id="app">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Dino Runner GA</title>
+        <link rel="stylesheet" href="/static/style.css" />
+    </head>
+    <body>
+        <div id="app">
+            <!-- ── Área del juego (izquierda, 70%) ── -->
+            <div id="game-area">
+                <canvas id="gameCanvas" width="800" height="400"></canvas>
+                <div id="status-bar">
+                    <span id="conn-status" class="disconnected"
+                        >⚫ Desconectado</span
+                    >
+                </div>
+            </div>
 
-    <!-- ── Área del juego (izquierda, 70%) ── -->
-    <div id="game-area">
-      <canvas id="gameCanvas" width="800" height="400"></canvas>
-      <div id="status-bar">
-        <span id="conn-status" class="disconnected">⚫ Desconectado</span>
-      </div>
-    </div>
+            <!-- ── Panel HUD lateral (derecha, 30%) ── -->
+            <div id="hud-panel">
+                <h1 class="hud-title">🦕 Dino Runner GA</h1>
 
-    <!-- ── Panel HUD lateral (derecha, 30%) ── -->
-    <div id="hud-panel">
-      <h1 class="hud-title">🦕 Dino Runner GA</h1>
+                <!-- Estadísticas en tiempo real -->
+                <div class="hud-section">
+                    <div class="stat-row">
+                        <span class="stat-label">Generación</span>
+                        <span class="stat-value" id="stat-gen">1</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Vivos</span>
+                        <span class="stat-value" id="stat-vivos">30 / 30</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Mejor fitness (actual)</span>
+                        <span class="stat-value accent" id="stat-fitness-actual"
+                            >0</span
+                        >
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label"
+                            >Mejor fitness (histórico)</span
+                        >
+                        <span class="stat-value gold" id="stat-fitness-hist"
+                            >0</span
+                        >
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Mejor cromosoma</span>
+                        <span class="stat-value small" id="stat-cromosoma"
+                            >[—, —]</span
+                        >
+                    </div>
+                </div>
 
-      <!-- Estadísticas en tiempo real -->
-      <div class="hud-section">
-        <div class="stat-row">
-          <span class="stat-label">Generación</span>
-          <span class="stat-value" id="stat-gen">1</span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-label">Vivos</span>
-          <span class="stat-value" id="stat-vivos">30 / 30</span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-label">Mejor fitness (actual)</span>
-          <span class="stat-value accent" id="stat-fitness-actual">0</span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-label">Mejor fitness (histórico)</span>
-          <span class="stat-value gold" id="stat-fitness-hist">0</span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-label">Mejor cromosoma</span>
-          <span class="stat-value small" id="stat-cromosoma">[—, —]</span>
-        </div>
-      </div>
+                <!-- Gráfico de historial de fitness -->
+                <div class="hud-section">
+                    <h3 class="section-title">📈 Historial de Fitness</h3>
+                    <canvas id="chartCanvas" width="240" height="120"></canvas>
+                </div>
 
-      <!-- Gráfico de historial de fitness -->
-      <div class="hud-section">
-        <h3 class="section-title">📈 Historial de Fitness</h3>
-        <canvas id="chartCanvas" width="240" height="120"></canvas>
-      </div>
+                <!-- Control de velocidad de simulación -->
+                <div class="hud-section">
+                    <h3 class="section-title">⚡ Velocidad</h3>
+                    <div class="speed-group">
+                        <button class="btn-speed active" data-factor="1">
+                            1×
+                        </button>
+                        <button class="btn-speed" data-factor="2">2×</button>
+                        <button class="btn-speed" data-factor="5">5×</button>
+                        <button class="btn-speed" data-factor="10">10×</button>
+                    </div>
+                </div>
 
-      <!-- Controles -->
-      <div class="hud-section">
-        <button id="btn-reiniciar" class="btn btn-danger">
-          🔄 Reiniciar Evolución
-        </button>
-        <button id="btn-toggle" class="btn btn-secondary">
-          👁 Solo el Mejor
-        </button>
-      </div>
+                <!-- Scatter plot: diversidad de cromosomas -->
+                <div class="hud-section">
+                    <h3 class="section-title">🧬 Cromosomas — Población</h3>
+                    <canvas
+                        id="scatterCanvas"
+                        width="240"
+                        height="150"
+                    ></canvas>
+                    <div class="scatter-legend">
+                        <span class="dot dot-vivo"></span><span>Vivo</span>
+                        <span class="dot dot-mejor"></span><span>Mejor</span>
+                        <span class="dot dot-muerto"></span><span>Muerto</span>
+                    </div>
+                </div>
 
-      <!-- Leyenda de colores -->
-      <div class="hud-section legend">
-        <div class="legend-item">
-          <span class="legend-color" style="background:rgba(74,144,226,0.7);"></span>
-          <span>Avatares vivos</span>
+                <!-- Controles -->
+                <div class="hud-section">
+                    <button id="btn-reiniciar" class="btn btn-danger">
+                        🔄 Reiniciar Evolución
+                    </button>
+                    <button id="btn-toggle" class="btn btn-secondary">
+                        👁 Solo el Mejor
+                    </button>
+                    <button id="btn-sensores" class="btn btn-secondary active">
+                        📡 Ocultar Sensores
+                    </button>
+                </div>
+
+                <!-- Leyenda de colores -->
+                <div class="hud-section legend">
+                    <div class="legend-item">
+                        <span
+                            class="legend-color"
+                            style="background: rgba(74, 144, 226, 0.7)"
+                        ></span>
+                        <span>Avatares vivos</span>
+                    </div>
+                    <div class="legend-item">
+                        <span
+                            class="legend-color"
+                            style="background: #ffd700"
+                        ></span>
+                        <span>Mejor individuo</span>
+                    </div>
+                    <div class="legend-item">
+                        <span
+                            class="legend-color"
+                            style="background: #e74c3c"
+                        ></span>
+                        <span>Obstáculos</span>
+                    </div>
+                </div>
+            </div>
+            <!-- /#hud-panel -->
         </div>
-        <div class="legend-item">
-          <span class="legend-color" style="background:#FFD700;"></span>
-          <span>Mejor individuo</span>
-        </div>
-        <div class="legend-item">
-          <span class="legend-color" style="background:#e74c3c;"></span>
-          <span>Obstáculos</span>
-        </div>
-      </div>
-    </div><!-- /#hud-panel -->
+        <!-- /#app -->
 
-  </div><!-- /#app -->
-
-  <script src="/static/game.js"></script>
-</body>
+        <script src="/static/game.js"></script>
+    </body>
 </html>

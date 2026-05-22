@@ -47,6 +47,10 @@ class GAController:
         # Conjunto de ids de obstáculos ya contados como superados en esta generación
         self._obstaculos_contados: set[int] = set()
 
+        # Factor de velocidad de simulación: 1=normal, 2=doble velocidad, etc.
+        # El bucle del juego ejecuta este número de ticks físicos por frame visual
+        self.factor_velocidad: int = 1
+
         # Arrancar la primera generación con cromosomas aleatorios
         self._nueva_generacion(inicializar_poblacion(TAMANO_POBLACION))
 

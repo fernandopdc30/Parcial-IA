@@ -82,6 +82,11 @@ async def manejar_websocket(websocket: WebSocket) -> None:
                         bucle_juego(controlador, enviar_estado, stop_event)
                     )
 
+                elif tipo == "velocidad":
+                    # Ajustar factor de velocidad de simulación (1×, 2×, 5×, 10×)
+                    factor = int(mensaje.get("factor", 1))
+                    controlador.factor_velocidad = max(1, min(20, factor))
+
                 # "toggle_vista" es manejado completamente en el frontend
 
             except json.JSONDecodeError:
