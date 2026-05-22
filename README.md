@@ -1,3 +1,9 @@
+# Integrantes:
+- Fernando Perez Del Castillo
+- Andrea del Rosario Velazco Yana
+- Esthephany Erika Choquehuanca Layme
+
+
 # 🦕 Dino Runner GA
 
 Un juego de navegador donde una población de 30 avatares evoluciona usando un **Algoritmo Genético (AG)** para aprender a saltar obstáculos. Toda la lógica del AG y la física del juego corren en Python (FastAPI), y el navegador solo recibe el estado por WebSocket y lo dibuja en Canvas.
