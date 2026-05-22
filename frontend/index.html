@@ -1,135 +1,451 @@
 <!doctype html>
 <html lang="es">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Dino Runner GA</title>
-        <link rel="stylesheet" href="/static/style.css" />
-    </head>
-    <body>
-        <div id="app">
-            <!-- ── Área del juego (izquierda, 70%) ── -->
-            <div id="game-area">
-                <canvas id="gameCanvas" width="800" height="400"></canvas>
-                <div id="status-bar">
-                    <span id="conn-status" class="disconnected"
-                        >⚫ Desconectado</span
-                    >
-                </div>
-            </div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dino Runner GA — Algoritmo Genético</title>
+    <meta name="description" content="Simulación de Algoritmo Genético donde avatares aprenden a saltar obstáculos mediante evolución artificial." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
 
-            <!-- ── Panel HUD lateral (derecha, 30%) ── -->
-            <div id="hud-panel">
-                <h1 class="hud-title">🦕 Dino Runner GA</h1>
+    <!-- ══════════════════════════════════════════════════════════
+         NAVBAR GLOBAL
+    ══════════════════════════════════════════════════════════ -->
+    <nav id="navbar">
+      <div class="nav-brand">
+        <span class="nav-icon">🦕</span>
+        <span class="nav-title">Dino Runner GA</span>
+      </div>
+      <div class="nav-links">
+        <button class="nav-btn active" id="nav-inicio" onclick="mostrarPantalla('landing')">
+          🏠 Inicio
+        </button>
+        <button class="nav-btn" id="nav-algoritmo" onclick="mostrarPantalla('landing'); scrollToSection('sec-algoritmo')">
+          🧬 Algoritmo
+        </button>
+        <button class="nav-btn" id="nav-sim" onclick="mostrarPantalla('simulacion')">
+          ▶ Simulación
+        </button>
+      </div>
+    </nav>
 
-                <!-- Estadísticas en tiempo real -->
-                <div class="hud-section">
-                    <div class="stat-row">
-                        <span class="stat-label">Generación</span>
-                        <span class="stat-value" id="stat-gen">1</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Vivos</span>
-                        <span class="stat-value" id="stat-vivos">30 / 30</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Mejor fitness (actual)</span>
-                        <span class="stat-value accent" id="stat-fitness-actual"
-                            >0</span
-                        >
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label"
-                            >Mejor fitness (histórico)</span
-                        >
-                        <span class="stat-value gold" id="stat-fitness-hist"
-                            >0</span
-                        >
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Mejor cromosoma</span>
-                        <span class="stat-value small" id="stat-cromosoma"
-                            >[—, —]</span
-                        >
-                    </div>
-                </div>
+    <!-- ══════════════════════════════════════════════════════════
+         PANTALLA 1: LANDING / INFORMACIÓN
+    ══════════════════════════════════════════════════════════ -->
+    <div id="screen-landing" class="screen active">
 
-                <!-- Gráfico de historial de fitness -->
-                <div class="hud-section">
-                    <h3 class="section-title">📈 Historial de Fitness</h3>
-                    <canvas id="chartCanvas" width="240" height="120"></canvas>
-                </div>
-
-                <!-- Control de velocidad de simulación -->
-                <div class="hud-section">
-                    <h3 class="section-title">⚡ Velocidad</h3>
-                    <div class="speed-group">
-                        <button class="btn-speed active" data-factor="1">
-                            1×
-                        </button>
-                        <button class="btn-speed" data-factor="2">2×</button>
-                        <button class="btn-speed" data-factor="5">5×</button>
-                        <button class="btn-speed" data-factor="10">10×</button>
-                    </div>
-                </div>
-
-                <!-- Scatter plot: diversidad de cromosomas -->
-                <div class="hud-section">
-                    <h3 class="section-title">🧬 Cromosomas — Población</h3>
-                    <canvas
-                        id="scatterCanvas"
-                        width="240"
-                        height="150"
-                    ></canvas>
-                    <div class="scatter-legend">
-                        <span class="dot dot-vivo"></span><span>Vivo</span>
-                        <span class="dot dot-mejor"></span><span>Mejor</span>
-                        <span class="dot dot-muerto"></span><span>Muerto</span>
-                    </div>
-                </div>
-
-                <!-- Controles -->
-                <div class="hud-section">
-                    <button id="btn-reiniciar" class="btn btn-danger">
-                        🔄 Reiniciar Evolución
-                    </button>
-                    <button id="btn-toggle" class="btn btn-secondary">
-                        👁 Solo el Mejor
-                    </button>
-                    <button id="btn-sensores" class="btn btn-secondary active">
-                        📡 Ocultar Sensores
-                    </button>
-                </div>
-
-                <!-- Leyenda de colores -->
-                <div class="hud-section legend">
-                    <div class="legend-item">
-                        <span
-                            class="legend-color"
-                            style="background: rgba(74, 144, 226, 0.7)"
-                        ></span>
-                        <span>Avatares vivos</span>
-                    </div>
-                    <div class="legend-item">
-                        <span
-                            class="legend-color"
-                            style="background: #ffd700"
-                        ></span>
-                        <span>Mejor individuo</span>
-                    </div>
-                    <div class="legend-item">
-                        <span
-                            class="legend-color"
-                            style="background: #e74c3c"
-                        ></span>
-                        <span>Obstáculos</span>
-                    </div>
-                </div>
-            </div>
-            <!-- /#hud-panel -->
+      <!-- Hero -->
+      <section class="hero">
+        <div class="hero-bg-orbs">
+          <div class="orb orb-1"></div>
+          <div class="orb orb-2"></div>
+          <div class="orb orb-3"></div>
         </div>
-        <!-- /#app -->
+        <div class="hero-content">
+          <div class="hero-badge">🎓 Inteligencia Artificial · Algoritmos Genéticos</div>
+          <h1 class="hero-title">
+            Resolución de Obstáculos<br/>
+            <span class="gradient-text">con Algoritmo Genético</span>
+          </h1>
+          <p class="hero-subtitle">
+            Observa cómo una población de avatares evoluciona generación tras generación,
+            aprendiendo a saltar obstáculos mediante selección natural artificial.
+          </p>
+          <div class="hero-actions">
+            <button class="btn-primary" id="btn-hero-sim" onclick="mostrarPantalla('simulacion')">
+              <span>▶ Ver Simulación</span>
+              <span class="btn-arrow">→</span>
+            </button>
+            <button class="btn-outline" onclick="scrollToSection('sec-problema')">
+              📖 Leer más
+            </button>
+          </div>
+          <div class="hero-stats">
+            <div class="hero-stat">
+              <span class="hero-stat-val">30</span>
+              <span class="hero-stat-lbl">Individuos</span>
+            </div>
+            <div class="hero-stat-sep">|</div>
+            <div class="hero-stat">
+              <span class="hero-stat-val">2</span>
+              <span class="hero-stat-lbl">Genes</span>
+            </div>
+            <div class="hero-stat-sep">|</div>
+            <div class="hero-stat">
+              <span class="hero-stat-val">∞</span>
+              <span class="hero-stat-lbl">Generaciones</span>
+            </div>
+          </div>
+        </div>
+        <div class="hero-visual">
+          <div class="mini-game-preview">
+            <canvas id="previewCanvas" width="420" height="200"></canvas>
+            <div class="preview-label">Vista previa animada</div>
+          </div>
+        </div>
+      </section>
 
-        <script src="/static/game.js"></script>
-    </body>
+      <!-- Problema -->
+      <section class="info-section" id="sec-problema">
+        <div class="section-header">
+          <div class="section-tag">01 · PROBLEMA</div>
+          <h2 class="section-title">¿Qué estamos resolviendo?</h2>
+        </div>
+        <div class="cards-grid">
+          <div class="info-card card-highlight">
+            <div class="card-icon">🎯</div>
+            <h3>El Desafío</h3>
+            <p>
+              Un avatar debe aprender a saltar obstáculos que se aproximan a velocidad creciente.
+              No existe regla programada: la IA <strong>descubre por sí sola</strong> cuándo saltar
+              observando la distancia y velocidad del obstáculo.
+            </p>
+          </div>
+          <div class="info-card">
+            <div class="card-icon">🧠</div>
+            <h3>¿Por qué AG?</h3>
+            <p>
+              El espacio de soluciones es continuo e incierto. Los Algoritmos Genéticos exploran
+              múltiples estrategias en paralelo sin necesidad de calcular gradientes ni tener
+              un modelo matemático explícito del problema.
+            </p>
+          </div>
+          <div class="info-card">
+            <div class="card-icon">📊</div>
+            <h3>Representación</h3>
+            <p>
+              Cada individuo es un <strong>cromosoma de 2 genes</strong>: la distancia umbral
+              para decidir saltar y la velocidad umbral del obstáculo. Estos genes evolucionan
+              hacia valores óptimos con cada generación.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Algoritmo -->
+      <section class="info-section alt-bg" id="sec-algoritmo">
+        <div class="section-header">
+          <div class="section-tag">02 · ALGORITMO</div>
+          <h2 class="section-title">¿Cómo funciona el AG?</h2>
+        </div>
+        <div class="pipeline">
+          <div class="pipeline-step">
+            <div class="step-num">1</div>
+            <div class="step-content">
+              <h4>Inicialización</h4>
+              <p>Se genera una población de <strong>30 avatares</strong> con genes aleatorios dentro
+              de rangos definidos: distancia ∈ [50, 400 px] y velocidad ∈ [0, 20 px/frame].</p>
+            </div>
+          </div>
+          <div class="pipeline-arrow">→</div>
+          <div class="pipeline-step">
+            <div class="step-num">2</div>
+            <div class="step-content">
+              <h4>Evaluación</h4>
+              <p>Cada avatar juega hasta morir. Su <strong>fitness = frames sobrevividos + obstáculos × 50</strong>.
+              Superar un obstáculo vale más que simplemente sobrevivir parado.</p>
+            </div>
+          </div>
+          <div class="pipeline-arrow">→</div>
+          <div class="pipeline-step">
+            <div class="step-num">3</div>
+            <div class="step-content">
+              <h4>Selección</h4>
+              <p><strong>Torneo de tamaño K=3</strong>: se eligen 3 individuos al azar y el de
+              mayor fitness avanza. Se repite para construir la nueva generación.</p>
+            </div>
+          </div>
+          <div class="pipeline-arrow">→</div>
+          <div class="pipeline-step">
+            <div class="step-num">4</div>
+            <div class="step-content">
+              <h4>Cruce y Mutación</h4>
+              <p><strong>Cruce (P=0.8)</strong>: se intercambian genes entre dos padres.
+              <strong>Mutación gaussiana (σ=20, P=0.1)</strong>: perturbación aleatoria para
+              mantener diversidad genética.</p>
+            </div>
+          </div>
+          <div class="pipeline-arrow">→</div>
+          <div class="pipeline-step">
+            <div class="step-num">5</div>
+            <div class="step-content">
+              <h4>Elitismo</h4>
+              <p>Los <strong>2 mejores individuos</strong> de cada generación pasan intactos a la
+              siguiente (elitismo). Garantiza que el progreso nunca retrocede.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Cromosoma -->
+      <section class="info-section" id="sec-cromosoma">
+        <div class="section-header">
+          <div class="section-tag">03 · CROMOSOMA</div>
+          <h2 class="section-title">Estructura del Cromosoma</h2>
+        </div>
+        <div class="chromosome-display">
+          <div class="chrom-visual">
+            <div class="gene-block gene-a">
+              <div class="gene-label">Gen 1</div>
+              <div class="gene-name">umbral_distancia</div>
+              <div class="gene-range">[50 — 400 px]</div>
+              <div class="gene-desc">Distancia a la que el avatar decide saltar</div>
+            </div>
+            <div class="gene-connector">
+              <div class="connector-line"></div>
+              <span>cromosoma</span>
+              <div class="connector-line"></div>
+            </div>
+            <div class="gene-block gene-b">
+              <div class="gene-label">Gen 2</div>
+              <div class="gene-name">umbral_velocidad</div>
+              <div class="gene-range">[0 — 20 px/f]</div>
+              <div class="gene-desc">Velocidad mínima del obstáculo para saltar</div>
+            </div>
+          </div>
+          <div class="fitness-formula">
+            <div class="formula-label">📐 Función de Fitness</div>
+            <div class="formula-box">
+              <span class="formula-text">
+                <span class="f-var">fitness</span>
+                <span class="f-eq"> = </span>
+                <span class="f-term">frames_sobrevividos</span>
+                <span class="f-op"> + </span>
+                <span class="f-term">obstáculos_superados</span>
+                <span class="f-op"> × </span>
+                <span class="f-const">50</span>
+              </span>
+            </div>
+            <p class="formula-note">
+              El multiplicador ×50 incentiva al AG a superar obstáculos activamente
+              en lugar de simplemente sobrevivir sin moverse.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Parámetros -->
+      <section class="info-section alt-bg" id="sec-parametros">
+        <div class="section-header">
+          <div class="section-tag">04 · PARÁMETROS</div>
+          <h2 class="section-title">Configuración del Sistema</h2>
+        </div>
+        <div class="params-grid">
+          <div class="params-group">
+            <div class="params-group-title">🧬 Algoritmo Genético</div>
+            <table class="params-table">
+              <tr>
+                <td class="param-name">Tamaño de población</td>
+                <td class="param-value">30 individuos</td>
+              </tr>
+              <tr>
+                <td class="param-name">Elitismo</td>
+                <td class="param-value">2 individuos</td>
+              </tr>
+              <tr>
+                <td class="param-name">Torneo K</td>
+                <td class="param-value">3</td>
+              </tr>
+              <tr>
+                <td class="param-name">P(crossover)</td>
+                <td class="param-value">80%</td>
+              </tr>
+              <tr>
+                <td class="param-name">P(mutación)</td>
+                <td class="param-value">10% por gen</td>
+              </tr>
+              <tr>
+                <td class="param-name">σ mutación</td>
+                <td class="param-value">20.0 (gaussiana)</td>
+              </tr>
+            </table>
+          </div>
+          <div class="params-group">
+            <div class="params-group-title">🎮 Física del Juego</div>
+            <table class="params-table">
+              <tr>
+                <td class="param-name">Velocidad inicial</td>
+                <td class="param-value">4.0 px/frame</td>
+              </tr>
+              <tr>
+                <td class="param-name">Incremento velocidad</td>
+                <td class="param-value">+0.001 px/frame²</td>
+              </tr>
+              <tr>
+                <td class="param-name">Gravedad</td>
+                <td class="param-value">0.6 px/frame²</td>
+              </tr>
+              <tr>
+                <td class="param-name">Impulso de salto</td>
+                <td class="param-value">−12.0 px/frame</td>
+              </tr>
+              <tr>
+                <td class="param-name">FPS objetivo</td>
+                <td class="param-value">60 fps</td>
+              </tr>
+              <tr>
+                <td class="param-name">Canvas</td>
+                <td class="param-value">800 × 400 px</td>
+              </tr>
+            </table>
+          </div>
+          <div class="params-group">
+            <div class="params-group-title">🚧 Obstáculos</div>
+            <table class="params-table">
+              <tr>
+                <td class="param-name">Ancho</td>
+                <td class="param-value">20 — 40 px</td>
+              </tr>
+              <tr>
+                <td class="param-name">Alto</td>
+                <td class="param-value">30 — 70 px</td>
+              </tr>
+              <tr>
+                <td class="param-name">Intervalo aparición</td>
+                <td class="param-value">60 — 120 frames</td>
+              </tr>
+              <tr>
+                <td class="param-name">Bonif. por superar</td>
+                <td class="param-value">+50 fitness</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- CTA final -->
+      <section class="cta-section">
+        <div class="cta-content">
+          <h2>¿Listo para verlo en acción?</h2>
+          <p>Observa cómo los avatares aprenden a sobrevivir en tiempo real.</p>
+          <button class="btn-primary large" onclick="mostrarPantalla('simulacion')">
+            <span>🚀 Iniciar Simulación</span>
+            <span class="btn-arrow">→</span>
+          </button>
+        </div>
+      </section>
+
+      <footer class="site-footer">
+        <span>Dino Runner GA · Algoritmos Genéticos · IA</span>
+      </footer>
+    </div>
+    <!-- /#screen-landing -->
+
+
+    <!-- ══════════════════════════════════════════════════════════
+         PANTALLA 2: SIMULACIÓN (vista original del juego)
+    ══════════════════════════════════════════════════════════ -->
+    <div id="screen-simulacion" class="screen">
+      <div id="app">
+        <!-- ── Área del juego (izquierda, 70%) ── -->
+        <div id="game-area">
+          <div class="game-header">
+            <button class="btn-back" onclick="mostrarPantalla('landing')">
+              ← Volver al inicio
+            </button>
+            <div class="game-title-bar">
+              <span class="game-title-icon">🦕</span>
+              <span class="game-title-text">Dino Runner GA — Simulación en vivo</span>
+            </div>
+            <div id="conn-status" class="disconnected">⚫ Desconectado</div>
+          </div>
+          <canvas id="gameCanvas" width="800" height="400"></canvas>
+        </div>
+
+        <!-- ── Panel HUD lateral (derecha, 30%) ── -->
+        <div id="hud-panel">
+          <h1 class="hud-title">🦕 Dino Runner GA</h1>
+
+          <!-- Estadísticas en tiempo real -->
+          <div class="hud-section">
+            <h3 class="section-title">📊 Estadísticas</h3>
+            <div class="stat-row">
+              <span class="stat-label">Generación</span>
+              <span class="stat-value" id="stat-gen">1</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Vivos</span>
+              <span class="stat-value" id="stat-vivos">30 / 30</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Mejor fitness (actual)</span>
+              <span class="stat-value accent" id="stat-fitness-actual">0</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Mejor fitness (histórico)</span>
+              <span class="stat-value gold" id="stat-fitness-hist">0</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Mejor cromosoma</span>
+              <span class="stat-value small" id="stat-cromosoma">[—, —]</span>
+            </div>
+          </div>
+
+          <!-- Gráfico de historial de fitness -->
+          <div class="hud-section">
+            <h3 class="section-title">📈 Historial de Fitness</h3>
+            <canvas id="chartCanvas" width="240" height="120"></canvas>
+          </div>
+
+          <!-- Control de velocidad de simulación -->
+          <div class="hud-section">
+            <h3 class="section-title">⚡ Velocidad</h3>
+            <div class="speed-group">
+              <button class="btn-speed active" data-factor="1">1×</button>
+              <button class="btn-speed" data-factor="2">2×</button>
+              <button class="btn-speed" data-factor="5">5×</button>
+              <button class="btn-speed" data-factor="10">10×</button>
+            </div>
+          </div>
+
+          <!-- Scatter plot: diversidad de cromosomas -->
+          <div class="hud-section">
+            <h3 class="section-title">🧬 Cromosomas — Población</h3>
+            <canvas id="scatterCanvas" width="240" height="150"></canvas>
+            <div class="scatter-legend">
+              <span class="dot dot-vivo"></span><span>Vivo</span>
+              <span class="dot dot-mejor"></span><span>Mejor</span>
+              <span class="dot dot-muerto"></span><span>Muerto</span>
+            </div>
+          </div>
+
+          <!-- Controles -->
+          <div class="hud-section">
+            <button id="btn-reiniciar" class="btn btn-danger">
+              🔄 Reiniciar Evolución
+            </button>
+            <button id="btn-toggle" class="btn btn-secondary">
+              👁 Solo el Mejor
+            </button>
+            <button id="btn-sensores" class="btn btn-secondary active">
+              📡 Ocultar Sensores
+            </button>
+          </div>
+
+          <!-- Leyenda de colores -->
+          <div class="hud-section legend">
+            <div class="legend-item">
+              <span class="legend-color" style="background: rgba(74, 144, 226, 0.7)"></span>
+              <span>Avatares vivos</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-color" style="background: #ffd700"></span>
+              <span>Mejor individuo</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-color" style="background: #e74c3c"></span>
+              <span>Obstáculos</span>
+            </div>
+          </div>
+        </div><!-- /#hud-panel -->
+      </div><!-- /#app -->
+    </div>
+    <!-- /#screen-simulacion -->
+
+    <script src="/static/game.js"></script>
+  </body>
 </html>
