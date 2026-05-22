@@ -12,7 +12,8 @@ Un juego de navegador donde una población de 30 avatares evoluciona usando un *
 
 ## 📸 Vista previa
 
-*(Captura o GIF del juego en funcionamiento)*
+<img width="1919" height="948" alt="image" src="https://github.com/user-attachments/assets/a190c88e-206e-4c0b-840b-d8319a78aecb" />
+
 
 ---
 
@@ -74,31 +75,6 @@ uvicorn backend.main:app --reload
 ```
 
 ---
-
-## 🌐 Despliegue en producción gratuita
-
-### Opción A — Railway
-
-1. Crea una cuenta en [railway.app](https://railway.app)
-2. Nuevo proyecto → **Deploy from GitHub repo**
-3. Conecta tu repositorio
-4. En **Settings → Start Command**:
-   ```
-   uvicorn backend.main:app --host 0.0.0.0 --port $PORT
-   ```
-5. Railway detecta automáticamente `requirements.txt` y `Python`
-
-### Opción B — Render
-
-1. Crea una cuenta en [render.com](https://render.com)
-2. Nuevo servicio → **Web Service** → conecta tu repositorio
-3. Configura:
-   - **Environment**: Python 3.11
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`
-4. Render asigna automáticamente `$PORT`
-
-> **WebSockets en producción**: El cliente detecta automáticamente si usar `ws://` o `wss://` según el protocolo HTTPS, sin cambios de código.
 
 ---
 
